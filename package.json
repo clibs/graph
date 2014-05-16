@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "hash": "0.0.1",
+    "list": "0.0.6"
+  },
+
+  "description": "Simple (directed) graph library.",
+
+  "keywords": [
+    "data",
+    "directed",
+    "graph",
+    "structure"
+  ],
+
+  "license": "MIT",
+  "name": "graph",
+  "repo": "clibs/graph",
+
+  "src": [
+    "src/graph.c",
+    "src/graph.h"
+  ],
+
+  "version": "0.0.1"
+}
