@@ -12,7 +12,6 @@ __TODO__.
 
 - Write some damn good documentation!
 - Write some more damn good documentation!!!
-- Given that `graph_vertex_t` and `graph_edge_t` only live in memory, I will be refactoring them to use their memory addresses as their `id`s instead. This will get rid of the unnecessary memory use. This also means you will no longer be limited to `uint32_t` of vertices and `uint64_t` of edges, but only the available memory on the heap. Also, see the "__Notes!__" section below.
 - Fight a bear.
 - Add support for adjacency matrices.
 

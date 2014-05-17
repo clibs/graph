@@ -2,9 +2,9 @@
 
 static inline uint8_t
 _uint_num_digits(uintptr_t num) {
-  if (num == 0) { return 1; }
-
   uint8_t digits = 0;
+
+  if (num == 0) { return 1; }
 
   while (num) {
     num = num / 10;
@@ -25,9 +25,7 @@ graph_graph_t *
 graph_new(const char * label, graph_store_t store_type) {
   graph_graph_t * graph = malloc(sizeof(graph_graph_t));
 
-  if (! graph) {
-    return NULL;
-  }
+  if (! graph) { return NULL; }
 
   graph->label       = label;
   graph->vertices    = list_new();
@@ -63,9 +61,7 @@ graph_vertex_t *
 graph_new_vertex(const char * label) {
   graph_vertex_t * vertex = malloc(sizeof(graph_vertex_t));
 
-  if (! vertex) {
-    return NULL;
-  }
+  if (! vertex) { return NULL; }
 
   vertex->id       = (uintptr_t) &vertex[0];
   vertex->label    = label;
@@ -84,9 +80,7 @@ graph_new_edge(
 ) {
   graph_edge_t * edge = malloc(sizeof(graph_edge_t));
 
-  if (! edge) {
-    return NULL;
-  }
+  if (! edge) { return NULL; }
 
   edge->id     = (uintptr_t) &edge[0];
   edge->label  = label;
@@ -184,12 +178,6 @@ graph_destroy(graph_graph_t * graph) {
   list_destroy(graph->vertices);
   list_destroy(graph->edges);
 
-  goto teardown_graph_store;
-
-  free(graph);
-
-teardown_graph_store:
-
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
       hash_each_val(graph->store.adjacency_list_hash, {
@@ -200,6 +188,8 @@ teardown_graph_store:
 
       break;
   }
+
+  free(graph);
 }
 
 static void
