@@ -1,5 +1,20 @@
 #include "graph.h"
 
+static inline uint8_t
+_uint_num_digits(uintptr_t num) {
+  if (num == 0) { return 1; }
+
+  uint8_t digits = 0;
+
+  while (num) {
+    num = num / 10;
+
+    digits++;
+  }
+
+  return digits;
+}
+
 static void
 _graph_destroy_vertex(graph_vertex_t *);
 
@@ -14,14 +29,11 @@ graph_new(const char * label, graph_store_t store_type) {
     return NULL;
   }
 
-  graph->label                          = label;
-  graph->vertices                       = list_new();
-  graph->edges                          = list_new();
-  graph->store_type                     = store_type;
-  graph->cardinality                    = 0;
-  graph->_last_vertex_auto_inc_id       = 0;
-  graph->_freed_vertex_auto_inc_id      = false;
-  graph->_last_freed_vertex_auto_inc_id = 0;
+  graph->label       = label;
+  graph->vertices    = list_new();
+  graph->edges       = list_new();
+  graph->store_type  = store_type;
+  graph->cardinality = 0;
 
   graph->vertices->free = _graph_destroy_vertex;
   graph->edges->free    = _graph_destroy_edge;
@@ -37,11 +49,6 @@ setup_graph_store:
       graph->store.adjacency_list_hash = hash_new();
 
       break;
-
-    // case GRAPH_STORE_ADJANCENCY_MATRIX:
-
-
-    //   break;
 
     default:
       graph->store_type = GRAPH_STORE_ADJANCENCY_LIST;
@@ -60,7 +67,7 @@ graph_new_vertex(const char * label) {
     return NULL;
   }
 
-  vertex->id       = 0;
+  vertex->id       = (uintptr_t) &vertex[0];
   vertex->label    = label;
   vertex->data     = NULL;
   vertex->edge_ids = list_new();
@@ -81,6 +88,7 @@ graph_new_edge(
     return NULL;
   }
 
+  edge->id     = (uintptr_t) &edge[0];
   edge->label  = label;
   edge->from   = from;
   edge->to     = to;
@@ -92,22 +100,11 @@ graph_new_edge(
 
 void
 graph_add_vertex(graph_graph_t * graph, graph_vertex_t * vertex) {
-  if (graph->_freed_vertex_auto_inc_id) {
-    vertex->id = graph->_last_freed_vertex_auto_inc_id;
-  } else {
-    vertex->id = graph->_last_vertex_auto_inc_id;
-  }
-
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
       goto init_vertex_adjancency_list;
 
       break;
-
-    // case GRAPH_STORE_ADJANCENCY_MATRIX:
-    //   goto init_vertex_adjancency_matrix;
-
-    //   break;
   }
 
   list_rpush(
@@ -116,45 +113,31 @@ graph_add_vertex(graph_graph_t * graph, graph_vertex_t * vertex) {
   );
 
   graph->cardinality++;
-  graph->_last_vertex_auto_inc_id++;
 
 init_vertex_adjancency_list:
 
   ;
 
-  char id_key[25];
+  char id_key[
+    _uint_num_digits(vertex->id)
+  ];
 
-  sprintf(id_key, ("%" PRIu64), vertex->id);
+  sprintf(id_key, ("%" PRIuPTR), vertex->id);
 
   hash_set(
     graph->store.adjacency_list_hash,
     id_key,
     list_new()
   );
-
-// init_vertex_adjancency_matrix:
-
-
 }
 
 void
 graph_add_edge(graph_graph_t * graph, graph_edge_t * edge) {
-  if (graph->_freed_edge_auto_inc_id) {
-    edge->id = graph->_last_freed_edge_auto_inc_id;
-  } else {
-    edge->id = graph->_last_edge_auto_inc_id;
-  }
-
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
       goto store_edge_adjancency_list;
 
       break;
-
-    // case GRAPH_STORE_ADJANCENCY_MATRIX:
-    //   goto store_edge_adjancency_matrix;
-
-    //   break;
   }
 
   list_rpush(
@@ -162,15 +145,15 @@ graph_add_edge(graph_graph_t * graph, graph_edge_t * edge) {
     list_node_new(edge)
   );
 
-  graph->_last_edge_auto_inc_id++;
-
 store_edge_adjancency_list:
 
   ;
 
-  char id_key[25];
+  char id_key[
+    _uint_num_digits(edge->from->id)
+  ];
 
-  sprintf(id_key, ("%" PRIu64), edge->from->id);
+  sprintf(id_key, ("%" PRIuPTR), edge->from->id);
 
   list_rpush(
     edge->from->edge_ids,
@@ -184,19 +167,15 @@ store_edge_adjancency_list:
     ),
     list_node_new(edge->to->id)
   );
-
-// store_edge_adjancency_matrix:
-
-
 }
 
 void
-graph_remove_vertex(graph_graph_t * graph, uint32_t id) {
+graph_remove_vertex(_UNUSED_VAR graph_graph_t * graph, _UNUSED_VAR uintptr_t id) {
   //
 }
 
 void
-graph_remove_edge(graph_graph_t * graph, uint64_t id) {
+graph_remove_edge(_UNUSED_VAR graph_graph_t * graph, _UNUSED_VAR uintptr_t id) {
   //
 }
 
@@ -220,11 +199,6 @@ teardown_graph_store:
       hash_free(graph->store.adjacency_list_hash);
 
       break;
-
-    // case GRAPH_STORE_ADJANCENCY_MATRIX:
-
-
-    //   break;
   }
 }
 

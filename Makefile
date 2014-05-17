@@ -1,6 +1,6 @@
 AR ?= ar
 CC ?= gcc
-CFLAGS = -Ideps -O3 -pedantic -std=c99 -Wall -Wextra
+CFLAGS = -Ideps -lm -O3 -pedantic -std=c99 -Wall -Wextra
 PREFIX ?= /usr/local
 
 DEPS += $(wildcard deps/*/*.c)
