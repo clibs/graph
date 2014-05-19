@@ -21,7 +21,7 @@ _graph_vertex_delete(graph_vertex_t *);
 static inline uint8_t
 _uint_num_digits(uintptr_t);
 
-extern graph_edge_t *
+graph_edge_t *
 graph_add_edge(
   graph_graph_t * graph,
   const char * label,
@@ -55,7 +55,7 @@ graph_add_edge(
   return edge;
 }
 
-extern graph_vertex_t *
+graph_vertex_t *
 graph_add_vertex(graph_graph_t * graph, const char * label) {
   graph_vertex_t * vertex = malloc(sizeof(graph_vertex_t));
 
