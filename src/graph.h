@@ -2,7 +2,6 @@
 #define __GRAPH_H__
 
 #include <inttypes.h>
-#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,13 +14,6 @@
 #define _UNUSED_VAR
 #endif
 
-struct _graph_vertex {
-  uintptr_t id;
-  const char * label;
-  void * data;
-  list_t * edge_ids;
-};
-
 struct _graph_edge {
   uintptr_t id;
   const char * label;
@@ -31,14 +23,21 @@ struct _graph_edge {
   void * data;
 };
 
+struct _graph_vertex {
+  uintptr_t id;
+  const char * label;
+  void * data;
+  list_t * edge_ids;
+};
+
 enum _graph_stores {
   GRAPH_STORE_ADJANCENCY_LIST
 };
 
 struct _graph_graph {
   const char * label;
-  list_t * vertices;
   list_t * edges;
+  list_t * vertices;
   enum _graph_stores store_type;
 
   union {
@@ -48,38 +47,33 @@ struct _graph_graph {
   uintptr_t cardinality;
 };
 
-typedef struct _graph_vertex graph_vertex_t;
 typedef struct _graph_edge graph_edge_t;
+typedef struct _graph_vertex graph_vertex_t;
 typedef struct _graph_graph graph_graph_t;
 typedef enum _graph_stores graph_store_t;
 
-extern graph_graph_t *
-graph_new(const char *, graph_store_t);
-
-extern graph_vertex_t *
-graph_new_vertex(const char *);
-
 extern graph_edge_t *
-graph_new_edge(
+graph_add_edge(
+  graph_graph_t *,
   const char *,
   graph_vertex_t *,
   graph_vertex_t *,
   int64_t
 );
 
-extern void
-graph_add_vertex(graph_graph_t *, graph_vertex_t *);
+extern graph_vertex_t *
+graph_add_vertex(graph_graph_t *, const char *);
 
 extern void
-graph_add_edge(graph_graph_t *, graph_edge_t *);
+graph_delete(graph_graph_t *);
 
-extern void
-graph_remove_vertex(graph_graph_t *, uintptr_t);
+extern graph_graph_t *
+graph_new(const char *, graph_store_t);
 
 extern void
 graph_remove_edge(graph_graph_t *, uintptr_t);
 
 extern void
-graph_destroy(graph_graph_t *);
+graph_remove_vertex(graph_graph_t *, uintptr_t);
 
 #endif
