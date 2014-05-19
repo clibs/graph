@@ -12,21 +12,21 @@ OBJS += $(SRCS:.c=.o)
 all: build/libgraph.a
 
 %.o: %.c
-	@$(CC) $< $(CFLAGS) -c -o $@
+	$(CC) $< $(CFLAGS) -c -o $@
 
 build/libgraph.a: $(OBJS)
-	@mkdir -p build
-	@$(AR) -crs $@ $^
+	mkdir -p build
+	$(AR) -crs $@ $^
 
 clean:
-	@rm -fr *.o build deps/*/*.o src/*.o
+	rm -fr *.o build deps/*/*.o src/*.o
 
 install: all
-	@cp -f build/libgraph.a $(PREFIX)/lib/libgraph.a
-	@cp -f src/graph.h $(PREFIX)/include/graph.h
+	cp -f build/libgraph.a $(PREFIX)/lib/libgraph.a
+	cp -f src/graph.h $(PREFIX)/include/graph.h
 
 uninstall:
-	@rm -fr $(PREFIX)/lib/libgraph.a
-	@rm -fr $(PREFIX)/include/graph.h
+	rm -fr $(PREFIX)/lib/libgraph.a
+	rm -fr $(PREFIX)/include/graph.h
 
 .PHONY: clean install uninstall
