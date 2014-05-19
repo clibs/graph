@@ -19,7 +19,7 @@ static void
 _graph_vertex_delete(graph_vertex_t *);
 
 static inline uint8_t
-_uint_num_digits(uintptr_t);
+_uint_num_digits(intptr_t);
 
 graph_edge_t *
 graph_add_edge(
@@ -33,7 +33,7 @@ graph_add_edge(
 
   if (! edge) { return NULL; }
 
-  edge->id     = (uintptr_t) &edge[0];
+  edge->id     = (intptr_t) &edge[0];
   edge->label  = label;
   edge->from   = from;
   edge->to     = to;
@@ -61,7 +61,7 @@ graph_add_vertex(graph_graph_t * graph, const char * label) {
 
   if (! vertex) { return NULL; }
 
-  vertex->id       = (uintptr_t) &vertex[0];
+  vertex->id       = (intptr_t) &vertex[0];
   vertex->label    = label;
   vertex->data     = NULL;
   vertex->edge_ids = list_new();
@@ -115,12 +115,12 @@ graph_new(const char * label, graph_store_t store_type) {
 }
 
 void
-graph_remove_edge(graph_graph_t * graph, uintptr_t id) {
+graph_remove_edge(graph_graph_t * graph, intptr_t id) {
   //
 }
 
 void
-graph_remove_vertex(graph_graph_t * graph, uintptr_t id) {
+graph_remove_vertex(graph_graph_t * graph, intptr_t id) {
   //
 }
 
@@ -204,7 +204,7 @@ _graph_vertex_delete(graph_vertex_t * vertex) {
 }
 
 static inline uint8_t
-_uint_num_digits(uintptr_t num) {
+_uint_num_digits(intptr_t num) {
   uint8_t digits = 0;
 
   if (num == 0) { return 1; }

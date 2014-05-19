@@ -15,7 +15,7 @@
 #endif
 
 struct _graph_edge {
-  uintptr_t id;
+  intptr_t id;
   const char * label;
   struct _graph_vertex * from;
   struct _graph_vertex * to;
@@ -24,7 +24,7 @@ struct _graph_edge {
 };
 
 struct _graph_vertex {
-  uintptr_t id;
+  intptr_t id;
   const char * label;
   void * data;
   list_t * edge_ids;
@@ -44,7 +44,7 @@ struct _graph_graph {
     hash_t * adjacency_list_hash;
   } store;
 
-  uintptr_t cardinality;
+  uintmax_t cardinality;
 };
 
 typedef struct _graph_edge graph_edge_t;
@@ -71,9 +71,9 @@ extern graph_graph_t *
 graph_new(const char *, graph_store_t);
 
 extern void
-graph_remove_edge(graph_graph_t *, uintptr_t);
+graph_remove_edge(graph_graph_t *, intptr_t);
 
 extern void
-graph_remove_vertex(graph_graph_t *, uintptr_t);
+graph_remove_vertex(graph_graph_t *, intptr_t);
 
 #endif
