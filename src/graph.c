@@ -19,7 +19,7 @@ static void
 _graph_vertex_delete(graph_vertex_t *);
 
 static inline uint8_t
-_uint_num_digits(intptr_t);
+_int_num_digits(intptr_t);
 
 graph_edge_t *
 graph_add_edge(
@@ -127,7 +127,7 @@ graph_remove_vertex(graph_graph_t * graph, intptr_t id) {
 void
 _graph_adjancency_list_append(graph_graph_t * graph, graph_edge_t * edge) {
   char id_key[
-    _uint_num_digits(edge->from->id)
+    _int_num_digits(edge->from->id)
   ];
 
   sprintf(id_key, ("%" PRIuPTR), edge->from->id);
@@ -149,7 +149,7 @@ _graph_adjancency_list_append(graph_graph_t * graph, graph_edge_t * edge) {
 static void
 _graph_adjancency_list_init(graph_graph_t * graph, graph_vertex_t * vertex) {
   char id_key[
-    _uint_num_digits(vertex->id)
+    _int_num_digits(vertex->id)
   ];
 
   sprintf(id_key, ("%" PRIuPTR), vertex->id);
@@ -204,15 +204,17 @@ _graph_vertex_delete(graph_vertex_t * vertex) {
 }
 
 static inline uint8_t
-_uint_num_digits(intptr_t num) {
+_int_num_digits(intptr_t num) {
   uint8_t digits = 0;
 
-  if (num == 0) { return 1; }
-
-  while (num) {
-    num = num / 10;
-
-    digits++;
+  if (num == 0) {
+    digits = 1;
+  } else {
+    digits = floor(
+      log10(
+        abs(num)
+      )
+    ) + 1;
   }
 
   return digits;
