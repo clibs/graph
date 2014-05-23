@@ -1,5 +1,22 @@
+/**
+ * The MIT License (MIT).
+ *
+ * Copyright (c) 2014 clibs
+ * Copyright (c) 2014 Jonathan Barronville <jonathan@scrapum.photos>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 #ifndef __GRAPH_H__
 #define __GRAPH_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <inttypes.h>
 #include <math.h>
@@ -9,14 +26,26 @@
 #include "hash/hash.h"
 #include "list/list.h"
 
-#if defined(__GNUC__) && (__GNUC__ >= 3)
+#if defined(__GNUC__)
+
+#if __GNUC__ >= 3
 #define _UNUSED_VAR __attribute__ ((unused))
+#endif
+
 #else
 #define _UNUSED_VAR
 #endif
 
+#ifdef __cplusplus
+#define _MALLOC(type, count) ((type *) malloc(sizeof(type) * count))
+#else
+#define _MALLOC(type, count) (malloc(sizeof(type) * count))
+#endif
+
+#define _FREE free
+
 struct _graph_edge {
-  intptr_t id;
+  uintptr_t id;
   const char * label;
   struct _graph_vertex * from;
   struct _graph_vertex * to;
@@ -25,7 +54,7 @@ struct _graph_edge {
 };
 
 struct _graph_vertex {
-  intptr_t id;
+  uintptr_t id;
   const char * label;
   void * data;
   list_t * edge_ids;
@@ -72,9 +101,13 @@ extern graph_graph_t *
 graph_new(const char *, graph_store_t);
 
 extern void
-graph_remove_edge(graph_graph_t *, intptr_t);
+graph_remove_edge(graph_graph_t *, uintptr_t);
 
 extern void
-graph_remove_vertex(graph_graph_t *, intptr_t);
+graph_remove_vertex(graph_graph_t *, uintptr_t);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

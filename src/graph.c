@@ -19,7 +19,7 @@ static void
 _graph_vertex_delete(graph_vertex_t *);
 
 static inline uint8_t
-_int_num_digits(intptr_t);
+_uint_num_digits(uintptr_t);
 
 graph_edge_t *
 graph_add_edge(
@@ -29,11 +29,11 @@ graph_add_edge(
   graph_vertex_t * to,
   int64_t weight
 ) {
-  graph_edge_t * edge = malloc(sizeof(graph_edge_t));
+  graph_edge_t * edge = _MALLOC(graph_edge_t, 1);
 
   if (! edge) { return NULL; }
 
-  edge->id     = (intptr_t) &edge[0];
+  edge->id     = (uintptr_t) (void *) &edge[0];
   edge->label  = label;
   edge->from   = from;
   edge->to     = to;
@@ -57,11 +57,11 @@ graph_add_edge(
 
 graph_vertex_t *
 graph_add_vertex(graph_graph_t * graph, const char * label) {
-  graph_vertex_t * vertex = malloc(sizeof(graph_vertex_t));
+  graph_vertex_t * vertex = _MALLOC(graph_vertex_t, 1);
 
   if (! vertex) { return NULL; }
 
-  vertex->id       = (intptr_t) &vertex[0];
+  vertex->id       = (uintptr_t) (void *) &vertex[0];
   vertex->label    = label;
   vertex->data     = NULL;
   vertex->edge_ids = list_new();
@@ -87,15 +87,13 @@ void
 graph_delete(graph_graph_t * graph) {
   list_destroy(graph->edges);
   list_destroy(graph->vertices);
-
   _graph_teardown_store(graph);
-
-  free(graph);
+  _FREE(graph);
 }
 
 graph_graph_t *
 graph_new(const char * label, graph_store_t store_type) {
-  graph_graph_t * graph = malloc(sizeof(graph_graph_t));
+  graph_graph_t * graph = _MALLOC(graph_graph_t, 1);
 
   if (! graph) { return NULL; }
 
@@ -115,19 +113,19 @@ graph_new(const char * label, graph_store_t store_type) {
 }
 
 void
-graph_remove_edge(graph_graph_t * graph, intptr_t id) {
+graph_remove_edge(_UNUSED_VAR graph_graph_t * graph, _UNUSED_VAR uintptr_t id) {
   //
 }
 
 void
-graph_remove_vertex(graph_graph_t * graph, intptr_t id) {
+graph_remove_vertex(_UNUSED_VAR graph_graph_t * graph, _UNUSED_VAR uintptr_t id) {
   //
 }
 
 void
 _graph_adjancency_list_append(graph_graph_t * graph, graph_edge_t * edge) {
   char id_key[
-    _int_num_digits(edge->from->id)
+    _uint_num_digits(edge->from->id)
   ];
 
   sprintf(id_key, ("%" PRIuPTR), edge->from->id);
@@ -149,7 +147,7 @@ _graph_adjancency_list_append(graph_graph_t * graph, graph_edge_t * edge) {
 static void
 _graph_adjancency_list_init(graph_graph_t * graph, graph_vertex_t * vertex) {
   char id_key[
-    _int_num_digits(vertex->id)
+    _uint_num_digits(vertex->id)
   ];
 
   sprintf(id_key, ("%" PRIuPTR), vertex->id);
@@ -163,7 +161,7 @@ _graph_adjancency_list_init(graph_graph_t * graph, graph_vertex_t * vertex) {
 
 static void
 _graph_edge_delete(graph_edge_t * edge) {
-  free(edge);
+  _FREE(edge);
 }
 
 static void
@@ -200,16 +198,15 @@ _graph_teardown_store(graph_graph_t * graph) {
 static void
 _graph_vertex_delete(graph_vertex_t * vertex) {
   list_destroy(vertex->edge_ids);
-  free(vertex);
+  _FREE(vertex);
 }
 
 static inline uint8_t
-_int_num_digits(intptr_t num) {
+_uint_num_digits(uintptr_t num) {
   uint8_t digits = 0;
 
-  if (num == 0) {
-    digits = 1;
-  } else {
+  if (num == 0) { digits = 1; }
+  else {
     digits = floor(
       log10(
         abs(num)
