@@ -1,4 +1,6 @@
 *.a
 *.bak
+*.dSYM
 *.o
 *.swp
+/example

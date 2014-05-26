@@ -1,25 +1,53 @@
 #include "graph.h"
 
-static void
-_graph_adjancency_list_append(graph_graph_t *, graph_edge_t *);
-
-static void
-_graph_adjancency_list_init(graph_graph_t *, graph_vertex_t *);
-
-static void
-_graph_edge_delete(graph_edge_t *);
-
-static void
-_graph_setup_store(graph_graph_t *);
-
-static void
-_graph_teardown_store(graph_graph_t *);
-
-static void
-_graph_vertex_delete(graph_vertex_t *);
+//==||||||||||||||||||||||||
+// + Static declarations. ||
+//==||||||||||||||||||||||||
 
 static inline uint8_t
-_uint_num_digits(uintptr_t);
+_uint_num_digits(
+  uintptr_t
+);
+
+static void
+graph_adjancency_list_append(
+  graph_graph_t *,
+  graph_edge_t *
+);
+
+static void
+graph_adjancency_list_init(
+  graph_graph_t *,
+  graph_vertex_t *
+);
+
+static void
+graph_edge_delete(
+  graph_edge_t *
+);
+
+static void
+graph_setup_store(
+  graph_graph_t *
+);
+
+static void
+graph_teardown_store(
+  graph_graph_t *
+);
+
+static void
+graph_vertex_delete(
+  graph_vertex_t *
+);
+
+//==||||||||||||||||||||||||
+// - Static declarations. ||
+//==||||||||||||||||||||||||
+
+//==|||||||||||||||||||||
+// + Core definitions. ||
+//==|||||||||||||||||||||
 
 graph_edge_t *
 graph_add_edge(
@@ -33,7 +61,7 @@ graph_add_edge(
 
   if (! edge) { return NULL; }
 
-  edge->id     = (uintptr_t) (void *) &edge[0];
+  edge->id     = _CAST_UINTPTR_T((void *) &edge[0]);
   edge->label  = label;
   edge->from   = from;
   edge->to     = to;
@@ -42,7 +70,7 @@ graph_add_edge(
 
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
-      _graph_adjancency_list_append(graph, edge);
+      graph_adjancency_list_append(graph, edge);
 
       break;
   }
@@ -56,19 +84,22 @@ graph_add_edge(
 }
 
 graph_vertex_t *
-graph_add_vertex(graph_graph_t * graph, const char * label) {
+graph_add_vertex(
+  graph_graph_t * graph,
+  const char * label
+) {
   graph_vertex_t * vertex = _MALLOC(graph_vertex_t, 1);
 
   if (! vertex) { return NULL; }
 
-  vertex->id       = (uintptr_t) (void *) &vertex[0];
+  vertex->id       = _CAST_UINTPTR_T((void *) &vertex[0]);
   vertex->label    = label;
   vertex->data     = NULL;
   vertex->edge_ids = list_new();
 
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
-      _graph_adjancency_list_init(graph, vertex);
+      graph_adjancency_list_init(graph, vertex);
 
       break;
   }
@@ -84,15 +115,20 @@ graph_add_vertex(graph_graph_t * graph, const char * label) {
 }
 
 void
-graph_delete(graph_graph_t * graph) {
+graph_delete(
+  graph_graph_t * graph
+) {
   list_destroy(graph->edges);
   list_destroy(graph->vertices);
-  _graph_teardown_store(graph);
+  graph_teardown_store(graph);
   _FREE(graph);
 }
 
 graph_graph_t *
-graph_new(const char * label, graph_store_t store_type) {
+graph_new(
+  const char * label,
+  graph_store_t store_type
+) {
   graph_graph_t * graph = _MALLOC(graph_graph_t, 1);
 
   if (! graph) { return NULL; }
@@ -102,28 +138,65 @@ graph_new(const char * label, graph_store_t store_type) {
   graph->vertices   = list_new();
   graph->store_type = store_type;
 
-  _graph_setup_store(graph);
+  graph_setup_store(graph);
 
-  graph->cardinality = 0;
+  graph->cardinality = _CAST_UINTMAX_T(0);
 
-  graph->edges->free    = _graph_edge_delete;
-  graph->vertices->free = _graph_vertex_delete;
+  graph->edges->free    = graph_edge_delete;
+  graph->vertices->free = graph_vertex_delete;
 
   return graph;
 }
 
 void
-graph_remove_edge(_UNUSED_VAR graph_graph_t * graph, _UNUSED_VAR uintptr_t id) {
+graph_remove_edge(
+  _UNUSED_VAR graph_graph_t * graph,
+  _UNUSED_VAR uintptr_t id
+) {
   //
 }
 
 void
-graph_remove_vertex(_UNUSED_VAR graph_graph_t * graph, _UNUSED_VAR uintptr_t id) {
+graph_remove_vertex(
+  _UNUSED_VAR graph_graph_t * graph,
+  _UNUSED_VAR uintptr_t id
+) {
   //
 }
 
-void
-_graph_adjancency_list_append(graph_graph_t * graph, graph_edge_t * edge) {
+//==|||||||||||||||||||||
+// - Core definitions. ||
+//==|||||||||||||||||||||
+
+//==|||||||||||||||||||||||
+// + Static definitions. ||
+//==|||||||||||||||||||||||
+
+static inline uint8_t
+_uint_num_digits(
+  uintptr_t num
+) {
+  uint8_t digits = _CAST_UINT8_T(0);
+
+  if (num == _CAST_UINTPTR_T(0)) { digits = _CAST_UINT8_T(1); }
+  else {
+    digits = _CAST_UINT8_T(
+      floor(
+        log10(
+          abs(num)
+        )
+      ) + 1
+    );
+  }
+
+  return digits;
+}
+
+static void
+graph_adjancency_list_append(
+  graph_graph_t * graph,
+  graph_edge_t * edge
+) {
   char id_key[
     _uint_num_digits(edge->from->id)
   ];
@@ -145,7 +218,10 @@ _graph_adjancency_list_append(graph_graph_t * graph, graph_edge_t * edge) {
 }
 
 static void
-_graph_adjancency_list_init(graph_graph_t * graph, graph_vertex_t * vertex) {
+graph_adjancency_list_init(
+  graph_graph_t * graph,
+  graph_vertex_t * vertex
+) {
   char id_key[
     _uint_num_digits(vertex->id)
   ];
@@ -160,12 +236,16 @@ _graph_adjancency_list_init(graph_graph_t * graph, graph_vertex_t * vertex) {
 }
 
 static void
-_graph_edge_delete(graph_edge_t * edge) {
+graph_edge_delete(
+  graph_edge_t * edge
+) {
   _FREE(edge);
 }
 
 static void
-_graph_setup_store(graph_graph_t * graph) {
+graph_setup_store(
+  graph_graph_t * graph
+) {
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
       graph->store.adjacency_list_hash = hash_new();
@@ -175,14 +255,16 @@ _graph_setup_store(graph_graph_t * graph) {
     default:
       graph->store_type = GRAPH_STORE_ADJANCENCY_LIST;
 
-      _graph_setup_store(graph);
+      graph_setup_store(graph);
 
       break;
   }
 }
 
 static void
-_graph_teardown_store(graph_graph_t * graph) {
+graph_teardown_store(
+  graph_graph_t * graph
+) {
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
       hash_each_val(graph->store.adjacency_list_hash, {
@@ -196,23 +278,13 @@ _graph_teardown_store(graph_graph_t * graph) {
 }
 
 static void
-_graph_vertex_delete(graph_vertex_t * vertex) {
+graph_vertex_delete(
+  graph_vertex_t * vertex
+) {
   list_destroy(vertex->edge_ids);
   _FREE(vertex);
 }
 
-static inline uint8_t
-_uint_num_digits(uintptr_t num) {
-  uint8_t digits = 0;
-
-  if (num == 0) { digits = 1; }
-  else {
-    digits = floor(
-      log10(
-        abs(num)
-      )
-    ) + 1;
-  }
-
-  return digits;
-}
+//==|||||||||||||||||||||||
+// - Static definitions. ||
+//==|||||||||||||||||||||||

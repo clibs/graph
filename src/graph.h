@@ -1,8 +1,9 @@
 /**
  * The MIT License (MIT).
  *
- * Copyright (c) 2014 clibs
- * Copyright (c) 2014 Jonathan Barronville <jonathan@scrapum.photos>
+ * https://github.com/clibs/graph
+ *
+ * Copyright (c) 2014 clibs, Jonathan Barronville (jonathan@scrapum.photos), and contributors.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -11,27 +12,38 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __GRAPH_H__
-#define __GRAPH_H__
+#ifndef __GRAPH_H_INCLUDED__
+#define __GRAPH_H_INCLUDED__
 
 #ifdef __cplusplus
-extern "C" {
-#endif
+#include <cinttypes>
+#include <cmath>
+#include <cstdbool>
+#include <cstdio>
+#include <cstdlib>
 
+using namespace std;
+#else
 #include <inttypes.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#endif
+
 #include "hash/hash.h"
 #include "list/list.h"
 
-#if defined(__GNUC__)
-
-#if __GNUC__ >= 3
+#if                         \
+  defined(__GNUC__) &&      \
+  (                         \
+    (__GNUC__ > 2) ||       \
+    (                       \
+      (__GNUC__ == 2) &&    \
+      (__GNUC_MINOR__ >= 7) \
+    )                       \
+  )
 #define _UNUSED_VAR __attribute__ ((unused))
-#endif
-
 #else
 #define _UNUSED_VAR
 #endif
@@ -44,45 +56,53 @@ extern "C" {
 
 #define _FREE free
 
-struct _graph_edge {
-  uintptr_t id;
-  const char * label;
-  struct _graph_vertex * from;
-  struct _graph_vertex * to;
-  int64_t weight;
-  void * data;
-};
+#if                         \
+  defined(__GNUC__) &&      \
+  (                         \
+    (__GNUC__ > 3) ||       \
+    (                       \
+      (__GNUC__ == 3) &&    \
+      (__GNUC_MINOR__ >= 3) \
+    )                       \
+  )
+#define GRAPH_ABI_EXPORT __attribute__ ((visibility ("default")))
+#define GRAPH_ABI_HIDDEN __attribute__ ((visibility ("hidden")))
+#else
+#define GRAPH_ABI_EXPORT
+#define GRAPH_ABI_HIDDEN
+#endif
 
-struct _graph_vertex {
-  uintptr_t id;
-  const char * label;
-  void * data;
-  list_t * edge_ids;
-};
+// #define _CAST_INT64_T(val) ((int64_t) val)
+#define _CAST_UINT8_T(val) ((uint8_t) val)
+// #define _CAST_UINT64_T(val) ((uint64_t) val)
+#define _CAST_UINTMAX_T(val) ((uintmax_t) val)
+#define _CAST_UINTPTR_T(val) ((uintptr_t) val)
 
-enum _graph_stores {
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//==|||||||||||||||||||||
+// + Type definitions. ||
+//==|||||||||||||||||||||
+
+typedef enum _graph_stores {
   GRAPH_STORE_ADJANCENCY_LIST
-};
-
-struct _graph_graph {
-  const char * label;
-  list_t * edges;
-  list_t * vertices;
-  enum _graph_stores store_type;
-
-  union {
-    hash_t * adjacency_list_hash;
-  } store;
-
-  uintmax_t cardinality;
-};
+} graph_store_t;
 
 typedef struct _graph_edge graph_edge_t;
-typedef struct _graph_vertex graph_vertex_t;
 typedef struct _graph_graph graph_graph_t;
-typedef enum _graph_stores graph_store_t;
+typedef struct _graph_vertex graph_vertex_t;
 
-extern graph_edge_t *
+//==|||||||||||||||||||||
+// - Type definitions. ||
+//==|||||||||||||||||||||
+
+//==|||||||||||||
+// + Core API. ||
+//==|||||||||||||
+
+GRAPH_ABI_EXPORT graph_edge_t *
 graph_add_edge(
   graph_graph_t *,
   const char *,
@@ -91,23 +111,78 @@ graph_add_edge(
   int64_t
 );
 
-extern graph_vertex_t *
-graph_add_vertex(graph_graph_t *, const char *);
+GRAPH_ABI_EXPORT graph_vertex_t *
+graph_add_vertex(
+  graph_graph_t *,
+  const char *
+);
 
-extern void
-graph_delete(graph_graph_t *);
+GRAPH_ABI_EXPORT void
+graph_delete(
+  graph_graph_t *
+);
 
-extern graph_graph_t *
-graph_new(const char *, graph_store_t);
+GRAPH_ABI_EXPORT graph_graph_t *
+graph_new(
+  const char *,
+  graph_store_t
+);
 
-extern void
-graph_remove_edge(graph_graph_t *, uintptr_t);
+GRAPH_ABI_EXPORT void
+graph_remove_edge(
+  graph_graph_t *,
+  uintptr_t
+);
 
-extern void
-graph_remove_vertex(graph_graph_t *, uintptr_t);
+GRAPH_ABI_EXPORT void
+graph_remove_vertex(
+  graph_graph_t *,
+  uintptr_t
+);
+
+//==|||||||||||||
+// - Core API. ||
+//==|||||||||||||
 
 #ifdef __cplusplus
 }
 #endif
+
+//==|||||||||||||||||||||||
+// + Struct definitions. ||
+//==|||||||||||||||||||||||
+
+struct _graph_edge {
+  void * data;
+  graph_vertex_t * from;
+  uintptr_t id;
+  const char * label;
+  graph_vertex_t * to;
+  int64_t weight;
+};
+
+struct _graph_graph {
+  uintmax_t cardinality;
+  list_t * edges;
+  const char * label;
+
+  union {
+    hash_t * adjacency_list_hash;
+  } store;
+
+  graph_store_t store_type;
+  list_t * vertices;
+};
+
+struct _graph_vertex {
+  void * data;
+  list_t * edge_ids;
+  uintptr_t id;
+  const char * label;
+};
+
+//==|||||||||||||||||||||||
+// - Struct definitions. ||
+//==|||||||||||||||||||||||
 
 #endif
