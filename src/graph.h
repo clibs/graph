@@ -12,8 +12,8 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __GRAPH_H_INCLUDED__
-#define __GRAPH_H_INCLUDED__
+#ifndef __GRAPH_H__INCLUDED__
+#define __GRAPH_H__INCLUDED__
 
 #ifdef __cplusplus
 #include <cinttypes>
@@ -21,6 +21,7 @@
 #include <cstdbool>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 using namespace std;
 #else
@@ -29,6 +30,7 @@ using namespace std;
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #endif
 
 #include "hash/hash.h"
@@ -72,19 +74,18 @@ using namespace std;
 #define GRAPH_ABI_HIDDEN
 #endif
 
-// #define _CAST_INT64_T(val) ((int64_t) val)
+#define _CAST_INTMAX_T(val) ((intmax_t) val)
 #define _CAST_UINT8_T(val) ((uint8_t) val)
-// #define _CAST_UINT64_T(val) ((uint64_t) val)
 #define _CAST_UINTMAX_T(val) ((uintmax_t) val)
-#define _CAST_UINTPTR_T(val) ((uintptr_t) val)
+// #define _CAST_UINTPTR_T(val) ((uintptr_t) val)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-//==|||||||||||||||||||||
-// + Type definitions. ||
-//==|||||||||||||||||||||
+// +-------+------------------+
+// | BEGIN | type definitions |
+// +-------+------------------+
 
 typedef enum _graph_stores {
   GRAPH_STORE_ADJANCENCY_LIST
@@ -94,13 +95,13 @@ typedef struct _graph_edge graph_edge_t;
 typedef struct _graph_graph graph_graph_t;
 typedef struct _graph_vertex graph_vertex_t;
 
-//==|||||||||||||||||||||
-// - Type definitions. ||
-//==|||||||||||||||||||||
+// +-----+------------------+
+// | END | type definitions |
+// +-----+------------------+
 
-//==|||||||||||||
-// + Core API. ||
-//==|||||||||||||
+// +-------+----------+
+// | BEGIN | core api |
+// +-------+----------+
 
 GRAPH_ABI_EXPORT graph_edge_t *
 graph_add_edge(
@@ -108,7 +109,7 @@ graph_add_edge(
   const char *,
   graph_vertex_t *,
   graph_vertex_t *,
-  int64_t
+  intmax_t
 );
 
 GRAPH_ABI_EXPORT graph_vertex_t *
@@ -131,37 +132,47 @@ graph_new(
 GRAPH_ABI_EXPORT void
 graph_remove_edge(
   graph_graph_t *,
-  uintptr_t
+  uintmax_t
 );
 
 GRAPH_ABI_EXPORT void
 graph_remove_vertex(
   graph_graph_t *,
-  uintptr_t
+  uintmax_t
 );
 
-//==|||||||||||||
-// - Core API. ||
-//==|||||||||||||
+// +-----+----------+
+// | END | core api |
+// +-----+----------+
 
-#ifdef __cplusplus
-}
-#endif
-
-//==|||||||||||||||||||||||
-// + Struct definitions. ||
-//==|||||||||||||||||||||||
+// +-------+--------------------+
+// | BEGIN | struct definitions |
+// +-------+--------------------+
 
 struct _graph_edge {
   void * data;
-  graph_vertex_t * from;
-  uintptr_t id;
+  graph_vertex_t * from_vertex;
+  uintmax_t id;
   const char * label;
-  graph_vertex_t * to;
-  int64_t weight;
+  graph_vertex_t * to_vertex;
+  intmax_t weight;
 };
 
 struct _graph_graph {
+  struct {
+    struct {
+      uintmax_t available;
+      bool is_available;
+      uintmax_t last;
+    } edge;
+
+    struct {
+      uintmax_t available;
+      bool is_available;
+      uintmax_t last;
+    } vertex;
+  } _auto_inc;
+
   uintmax_t cardinality;
   list_t * edges;
   const char * label;
@@ -176,13 +187,40 @@ struct _graph_graph {
 
 struct _graph_vertex {
   void * data;
-  list_t * edge_ids;
-  uintptr_t id;
+  uintmax_t id;
   const char * label;
 };
 
-//==|||||||||||||||||||||||
-// - Struct definitions. ||
-//==|||||||||||||||||||||||
+// +-----+--------------------+
+// | END | struct definitions |
+// +-----+--------------------+
+
+// +-------+-----------+
+// | BEGIN | utilities |
+// +-------+-----------+
+
+GRAPH_ABI_HIDDEN inline uint8_t
+_uint_num_digits(
+  uintmax_t num
+) {
+  uint8_t digits = 0;
+
+  if (num == 0) { digits = 1; }
+  else {
+    digits = floor(
+      log10(num)
+    ) + 1;
+  }
+
+  return digits;
+}
+
+// +-----+-----------+
+// | END | utilities |
+// +-----+-----------+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

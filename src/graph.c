@@ -1,12 +1,20 @@
 #include "graph.h"
 
-//==||||||||||||||||||||||||
-// + Static declarations. ||
-//==||||||||||||||||||||||||
+// +-------+---------------------+
+// | BEGIN | static declarations |
+// +-------+---------------------+
 
-static inline uint8_t
-_uint_num_digits(
-  uintptr_t
+static enum _graph_item_types {
+  _GRAPH_ITEM_TYPE_EDGE,
+  _GRAPH_ITEM_TYPE_GRAPH,
+  _GRAPH_ITEM_TYPE_VERTEX
+};
+
+static void
+_graph_item_set_label(
+  void *,
+  const char *,
+  enum _graph_item_types
 );
 
 static void
@@ -41,32 +49,35 @@ graph_vertex_delete(
   graph_vertex_t *
 );
 
-//==||||||||||||||||||||||||
-// - Static declarations. ||
-//==||||||||||||||||||||||||
+// +-----+---------------------+
+// | END | static declarations |
+// +-----+---------------------+
 
-//==|||||||||||||||||||||
-// + Core definitions. ||
-//==|||||||||||||||||||||
+// +-------+------------------+
+// | BEGIN | core definitions |
+// +-------+------------------+
 
 graph_edge_t *
 graph_add_edge(
   graph_graph_t * graph,
   const char * label,
-  graph_vertex_t * from,
-  graph_vertex_t * to,
-  int64_t weight
+  graph_vertex_t * from_vertex,
+  graph_vertex_t * to_vertex,
+  intmax_t weight
 ) {
   graph_edge_t * edge = _MALLOC(graph_edge_t, 1);
 
   if (! edge) { return NULL; }
 
-  edge->id     = _CAST_UINTPTR_T((void *) &edge[0]);
-  edge->label  = label;
-  edge->from   = from;
-  edge->to     = to;
-  edge->weight = weight;
-  edge->data   = NULL;
+  if (graph->_auto_inc.edge.is_available) { edge->id = graph->_auto_inc.edge.available; }
+  else { edge->id = ++graph->_auto_inc.edge.last; }
+
+  edge->from_vertex = from_vertex;
+  edge->to_vertex   = to_vertex;
+  edge->weight      = weight;
+  edge->data        = NULL;
+
+  _graph_item_set_label(edge, label, _GRAPH_ITEM_TYPE_EDGE);
 
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
@@ -92,10 +103,12 @@ graph_add_vertex(
 
   if (! vertex) { return NULL; }
 
-  vertex->id       = _CAST_UINTPTR_T((void *) &vertex[0]);
-  vertex->label    = label;
-  vertex->data     = NULL;
-  vertex->edge_ids = list_new();
+  if (graph->_auto_inc.vertex.is_available) { vertex->id = graph->_auto_inc.vertex.available; }
+  else { vertex->id = ++graph->_auto_inc.vertex.last; }
+
+  vertex->data = NULL;
+
+  _graph_item_set_label(vertex, label, _GRAPH_ITEM_TYPE_VERTEX);
 
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
@@ -118,6 +131,7 @@ void
 graph_delete(
   graph_graph_t * graph
 ) {
+  _FREE(graph->label);
   list_destroy(graph->edges);
   list_destroy(graph->vertices);
   graph_teardown_store(graph);
@@ -138,12 +152,24 @@ graph_new(
   graph->vertices   = list_new();
   graph->store_type = store_type;
 
+  _graph_item_set_label(graph, label, _GRAPH_ITEM_TYPE_GRAPH);
   graph_setup_store(graph);
 
-  graph->cardinality = _CAST_UINTMAX_T(0);
+  graph->_auto_inc.edge.available    = 0;
+  graph->_auto_inc.edge.is_available = false;
+  graph->_auto_inc.edge.last         = 0;
+
+  graph->_auto_inc.vertex.available    = 0;
+  graph->_auto_inc.vertex.is_available = false;
+  graph->_auto_inc.vertex.last         = 0;
+
+  graph->cardinality = 0;
 
   graph->edges->free    = graph_edge_delete;
   graph->vertices->free = graph_vertex_delete;
+
+  // graph->edges->match    = graph_edge_match;
+  // graph->vertices->match = graph_vertex_match;
 
   return graph;
 }
@@ -151,7 +177,7 @@ graph_new(
 void
 graph_remove_edge(
   _UNUSED_VAR graph_graph_t * graph,
-  _UNUSED_VAR uintptr_t id
+  _UNUSED_VAR uintmax_t id
 ) {
   //
 }
@@ -159,37 +185,150 @@ graph_remove_edge(
 void
 graph_remove_vertex(
   _UNUSED_VAR graph_graph_t * graph,
-  _UNUSED_VAR uintptr_t id
+  _UNUSED_VAR uintmax_t id
 ) {
   //
 }
 
-//==|||||||||||||||||||||
-// - Core definitions. ||
-//==|||||||||||||||||||||
+// +-----+------------------+
+// | END | core definitions |
+// +-----+------------------+
 
-//==|||||||||||||||||||||||
-// + Static definitions. ||
-//==|||||||||||||||||||||||
+// +-------+--------------------+
+// | BEGIN | static definitions |
+// +-------+--------------------+
 
-static inline uint8_t
-_uint_num_digits(
-  uintptr_t num
+static void
+_graph_item_set_label(
+  void * item,
+  const char * label,
+  enum _graph_item_types type
 ) {
-  uint8_t digits = _CAST_UINT8_T(0);
+  uint8_t label_size;
+  uint8_t label_wrap_size;
 
-  if (num == _CAST_UINTPTR_T(0)) { digits = _CAST_UINT8_T(1); }
-  else {
-    digits = _CAST_UINT8_T(
-      floor(
-        log10(
-          abs(num)
-        )
-      ) + 1
-    );
+  switch (type) {
+    case _GRAPH_ITEM_TYPE_EDGE:
+      label_wrap_size = 9;
+
+      break;
+
+    case _GRAPH_ITEM_TYPE_GRAPH:
+      label_wrap_size = 10;
+
+      break;
+
+    case _GRAPH_ITEM_TYPE_VERTEX:
+      label_wrap_size = 11;
+
+      break;
   }
 
-  return digits;
+  if (label) {
+    label_size = (
+      strlen(label) +
+      label_wrap_size +
+      1
+    );
+
+    switch (type) {
+      case _GRAPH_ITEM_TYPE_EDGE:
+        ((graph_edge_t *) item)->label = _MALLOC(const char, label_size);
+
+        snprintf(
+          ((graph_edge_t *) item)->label,
+          label_size,
+          "<<EDGE:%s>>",
+          label
+        );
+
+        break;
+
+      case _GRAPH_ITEM_TYPE_GRAPH:
+        ((graph_graph_t *) item)->label = _MALLOC(const char, label_size);
+
+        snprintf(
+          ((graph_graph_t *) item)->label,
+          label_size,
+          "<<GRAPH:%s>>",
+          label
+        );
+
+        break;
+
+      case _GRAPH_ITEM_TYPE_VERTEX:
+        ((graph_vertex_t *) item)->label = _MALLOC(const char, label_size);
+
+        snprintf(
+          ((graph_vertex_t *) item)->label,
+          label_size,
+          "<<VERTEX:%s>>",
+          label
+        );
+
+        break;
+    }
+  }
+  else {
+    uint8_t _id_num_digits;
+
+    switch (type) {
+      case _GRAPH_ITEM_TYPE_EDGE:
+        _id_num_digits = _uint_num_digits(((graph_edge_t *) item)->id);
+
+        break;
+
+      case _GRAPH_ITEM_TYPE_GRAPH:
+        _id_num_digits = 11; // "[[UNKNOWN]]"
+
+        break;
+
+      case _GRAPH_ITEM_TYPE_VERTEX:
+        _id_num_digits = _uint_num_digits(((graph_vertex_t *) item)->id);
+
+        break;
+    }
+
+    uint8_t _id_num_digits_str = _id_num_digits + 1;
+    label_size = _id_num_digits_str + label_wrap_size;
+
+    switch (type) {
+      case _GRAPH_ITEM_TYPE_EDGE:
+        ((graph_edge_t *) item)->label = _MALLOC(const char, label_size);
+
+        snprintf(
+          ((graph_edge_t *) item)->label,
+          label_size,
+          ("<<EDGE:%" PRIuMAX ">>"),
+          ((graph_edge_t *) item)->id
+        );
+
+        break;
+
+      case _GRAPH_ITEM_TYPE_GRAPH:
+        ((graph_graph_t *) item)->label = _MALLOC(const char, label_size);
+
+        snprintf(
+          ((graph_graph_t *) item)->label,
+          label_size,
+          "<<GRAPH:[[UNKNOWN]]>>"
+        );
+
+        break;
+
+      case _GRAPH_ITEM_TYPE_VERTEX:
+        ((graph_vertex_t *) item)->label = _MALLOC(const char, label_size);
+
+        snprintf(
+          ((graph_vertex_t *) item)->label,
+          label_size,
+          ("<<VERTEX:%" PRIuMAX ">>"),
+          ((graph_vertex_t *) item)->id
+        );
+
+        break;
+    }
+  }
 }
 
 static void
@@ -197,23 +336,23 @@ graph_adjancency_list_append(
   graph_graph_t * graph,
   graph_edge_t * edge
 ) {
-  char id_key[
-    _uint_num_digits(edge->from->id)
-  ];
+  uint8_t _id_num_digits = _uint_num_digits(edge->from_vertex->id);
+  uint8_t _id_num_digits_str = _id_num_digits + 1;
+  char id_key[_id_num_digits_str];
 
-  sprintf(id_key, ("%" PRIuPTR), edge->from->id);
-
-  list_rpush(
-    edge->from->edge_ids,
-    list_node_new(edge->id)
+  snprintf(
+    id_key,
+    _id_num_digits_str,
+    ("%" PRIuMAX),
+    edge->from_vertex->id
   );
 
   list_rpush(
-    hash_get(
+    ((list_t *) hash_get(
       graph->store.adjacency_list_hash,
       id_key
-    ),
-    list_node_new(edge->to->id)
+    )),
+    list_node_new(edge)
   );
 }
 
@@ -222,23 +361,41 @@ graph_adjancency_list_init(
   graph_graph_t * graph,
   graph_vertex_t * vertex
 ) {
-  char id_key[
-    _uint_num_digits(vertex->id)
-  ];
+  uint8_t _id_num_digits = _uint_num_digits(vertex->id);
+  uint8_t _id_num_digits_str = _id_num_digits + 1;
+  char id_key[_id_num_digits_str];
 
-  sprintf(id_key, ("%" PRIuPTR), vertex->id);
+  snprintf(
+    id_key,
+    _id_num_digits_str,
+    ("%" PRIuMAX),
+    vertex->id
+  );
 
   hash_set(
     graph->store.adjacency_list_hash,
     id_key,
     list_new()
   );
+
+  // ((list_t *) hash_get(
+  //   graph->store.adjacency_list_hash,
+  //   id_key
+  // ))->match = graph_adjancency_list_match;
 }
+
+// static bool
+// graph_adjancency_list_match(
+//   graph_edge_t * edge,
+// ) {
+//   return false;
+// }
 
 static void
 graph_edge_delete(
   graph_edge_t * edge
 ) {
+  _FREE(edge->label);
   _FREE(edge);
 }
 
@@ -269,7 +426,7 @@ graph_teardown_store(
     case GRAPH_STORE_ADJANCENCY_LIST:
       hash_each_val(graph->store.adjacency_list_hash, {
         list_destroy(val);
-      })
+      });
 
       hash_free(graph->store.adjacency_list_hash);
 
@@ -281,10 +438,10 @@ static void
 graph_vertex_delete(
   graph_vertex_t * vertex
 ) {
-  list_destroy(vertex->edge_ids);
+  _FREE(vertex->label);
   _FREE(vertex);
 }
 
-//==|||||||||||||||||||||||
-// - Static definitions. ||
-//==|||||||||||||||||||||||
+// +-----+--------------------+
+// | END | static definitions |
+// +-----+--------------------+
