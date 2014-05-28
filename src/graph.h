@@ -221,7 +221,7 @@ struct _graph_vertex {
 // | BEGIN | utilities |
 // +-------+-----------+
 
-GRAPH_ABI_HIDDEN _ALWAYS_INLINE inline uint8_t
+_ALWAYS_INLINE inline uint8_t
 _uint_num_digits(
   uintmax_t num
 ) {
