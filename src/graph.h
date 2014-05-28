@@ -33,7 +33,6 @@ using namespace std;
 #include <string.h>
 #endif
 
-// #include "hash/hash.h"
 #include "list/list.h"
 #include "uthash/uthash.h"
 
