@@ -95,6 +95,9 @@ graph_add_edge(
 
   pthread_t set_label_th;
   struct _graph_item_set_label_th_args * set_label_th_args = _MALLOC(struct _graph_item_set_label_th_args, 1);
+
+  if (! set_label_th_args) { exit(-1); }
+
   int set_label_th_err = 0;
 
   set_label_th_args->item  = edge;
@@ -147,6 +150,9 @@ graph_add_vertex(
 
   pthread_t set_label_th;
   struct _graph_item_set_label_th_args * set_label_th_args = _MALLOC(struct _graph_item_set_label_th_args, 1);
+
+  if (! set_label_th_args) { exit(-1); }
+
   int set_label_th_err = 0;
 
   set_label_th_args->item  = vertex;
