@@ -30,7 +30,7 @@ build/lib/libgraph.a: $(OBJS)
 	$(AR) -crs $@ $^
 
 clean:
-	rm -fr *.o build deps/*/*.o src/*.o
+	rm -fr *.o build deps/*/*.o example example.dSYM src/*.o
 
 example:
 	$(CC) $(CFLAGS) -Ibuild/include -o example example.c -Lbuild/lib -lgraph
