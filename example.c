@@ -1,3 +1,8 @@
+/**
+ * Note:
+ * To compile, simply run `make example`.
+ */
+
 #include <stdio.h>
 #include "graph/graph.h"
 
