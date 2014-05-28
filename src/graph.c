@@ -93,7 +93,22 @@ graph_add_edge(
   edge->weight      = weight;
   edge->data        = NULL;
 
-  _graph_item_set_label(edge, label, _GRAPH_ITEM_TYPE_EDGE);
+  pthread_t set_label_th;
+  struct _graph_item_set_label_th_args * set_label_th_args = _MALLOC(struct _graph_item_set_label_th_args, 1);
+  int set_label_th_err = 0;
+
+  set_label_th_args->item  = edge;
+  set_label_th_args->label = label;
+  set_label_th_args->type  = _GRAPH_ITEM_TYPE_EDGE;
+
+  set_label_th_err = pthread_create(
+    &set_label_th,
+    NULL,
+    _graph_item_set_label_th,
+    set_label_th_args
+  );
+
+  if (set_label_th_err) { exit(-1); }
 
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
@@ -106,6 +121,12 @@ graph_add_edge(
     graph->edges,
     list_node_new(edge)
   );
+
+  set_label_th_err = pthread_join(set_label_th, NULL);
+
+  if (set_label_th_err) { exit(-1); }
+
+  _FREE(set_label_th_args);
 
   return edge;
 }
