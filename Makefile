@@ -32,7 +32,7 @@ build/lib/libgraph.a: $(OBJS)
 clean:
 	rm -fr *.o build deps/*/*.o example example.dSYM src/*.o
 
-example:
+example: build
 	$(CC) $(CFLAGS) -Ibuild/include -o example example.c -Lbuild/lib -lgraph
 
 install: all
