@@ -33,6 +33,8 @@ using namespace std;
 #include <string.h>
 #endif
 
+#include <pthread.h>
+
 #include "list/list.h"
 #include "uthash/uthash.h"
 
@@ -130,6 +132,20 @@ GRAPH_ABI_EXPORT graph_vertex_t *
 graph_add_vertex(
   graph_graph_t *,
   const char *
+);
+
+GRAPH_ABI_EXPORT void
+graph_change_edge_id(
+  graph_graph_t *,
+  graph_edge_t *,
+  uintmax_t
+);
+
+GRAPH_ABI_EXPORT void
+graph_change_vertex_id(
+  graph_graph_t *,
+  graph_vertex_t *,
+  uintmax_t
 );
 
 GRAPH_ABI_EXPORT void

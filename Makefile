@@ -1,6 +1,6 @@
 AR ?= ar
 CC ?= gcc
-CFLAGS = -Ideps -lm -pedantic -std=c99 -v -Wall -Wextra
+CFLAGS = -Ideps -lm -lpthread -pedantic -std=c99 -v -Wall -Wextra
 
 ifeq ($(APP_DEBUG),true)
 	CFLAGS += -g -O0

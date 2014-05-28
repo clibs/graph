@@ -10,11 +10,22 @@ static enum _graph_item_types {
   _GRAPH_ITEM_TYPE_VERTEX
 };
 
+struct _graph_item_set_label_th_args {
+  void * item;
+  const char * label;
+  enum _graph_item_types type;
+};
+
 static void
 _graph_item_set_label(
   void *,
   const char *,
   enum _graph_item_types
+);
+
+static void
+_graph_item_set_label_th(
+  struct _graph_item_set_label_th_args *
 );
 
 static void
@@ -113,7 +124,22 @@ graph_add_vertex(
 
   vertex->data = NULL;
 
-  _graph_item_set_label(vertex, label, _GRAPH_ITEM_TYPE_VERTEX);
+  pthread_t set_label_th;
+  struct _graph_item_set_label_th_args * set_label_th_args = _MALLOC(struct _graph_item_set_label_th_args, 1);
+  int set_label_th_err = 0;
+
+  set_label_th_args->item  = vertex;
+  set_label_th_args->label = label;
+  set_label_th_args->type  = _GRAPH_ITEM_TYPE_VERTEX;
+
+  set_label_th_err = pthread_create(
+    &set_label_th,
+    NULL,
+    _graph_item_set_label_th,
+    set_label_th_args
+  );
+
+  if (set_label_th_err) { exit(-1); }
 
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
@@ -129,7 +155,31 @@ graph_add_vertex(
 
   graph->cardinality++;
 
+  set_label_th_err = pthread_join(set_label_th, NULL);
+
+  if (set_label_th_err) { exit(-1); }
+
+  _FREE(set_label_th_args);
+
   return vertex;
+}
+
+void
+graph_change_edge_id(
+  graph_graph_t * graph,
+  graph_edge_t * edge,
+  uintmax_t id
+) {
+  //
+}
+
+void
+graph_change_vertex_id(
+  graph_graph_t * graph,
+  graph_vertex_t * vertex,
+  uintmax_t id
+) {
+  //
 }
 
 void
@@ -181,18 +231,24 @@ graph_new(
 
 void
 graph_remove_edge(
-  _UNUSED_VAR graph_graph_t * graph,
-  _UNUSED_VAR uintmax_t id
+  graph_graph_t * graph,
+  uintmax_t id
 ) {
   //
+
+  graph->_auto_inc.edge.available    = id;
+  graph->_auto_inc.edge.is_available = true;
 }
 
 void
 graph_remove_vertex(
-  _UNUSED_VAR graph_graph_t * graph,
-  _UNUSED_VAR uintmax_t id
+  graph_graph_t * graph,
+  uintmax_t id
 ) {
   //
+
+  graph->_auto_inc.vertex.available    = id;
+  graph->_auto_inc.vertex.is_available = true;
 }
 
 // +-----+------------------+
@@ -323,11 +379,7 @@ _graph_item_set_label(
 
         if (! ((graph_graph_t *) item)->label) { exit(-1); }
 
-        snprintf(
-          ((graph_graph_t *) item)->label,
-          label_size,
-          "<<GRAPH:[[UNKNOWN]]>>"
-        );
+        snprintf(((graph_graph_t *) item)->label, label_size, "<<GRAPH:[[UNKNOWN]]>>");
 
         break;
 
@@ -346,6 +398,15 @@ _graph_item_set_label(
         break;
     }
   }
+}
+
+static void
+_graph_item_set_label_th(
+  struct _graph_item_set_label_th_args * args
+) {
+  struct _graph_item_set_label_th_args * _args = args;
+
+  _graph_item_set_label(_args->item, _args->label, _args->type);
 }
 
 static void
@@ -456,11 +517,7 @@ graph_teardown_store_adjacency_list(
   ) {
     list_destroy(ht->edges);
 
-    HASH_DELETE(
-      handle,
-      graph->store.adjacency_list_hash,
-      ht
-    );
+    HASH_DELETE(handle, graph->store.adjacency_list_hash, ht);
 
     _FREE(ht);
   }
