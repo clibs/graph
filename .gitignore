@@ -3,4 +3,5 @@
 *.dSYM
 *.o
 *.swp
+/build
 /example
