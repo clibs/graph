@@ -40,6 +40,20 @@ using namespace std;
 #if                         \
   defined(__GNUC__) &&      \
   (                         \
+    (__GNUC__ > 3) ||       \
+    (                       \
+      (__GNUC__ == 3) &&    \
+      (__GNUC_MINOR__ >= 1) \
+    )                       \
+  )
+#define _ALWAYS_INLINE __attribute__ ((always_inline))
+#else
+#define _ALWAYS_INLINE
+#endif
+
+#if                         \
+  defined(__GNUC__) &&      \
+  (                         \
     (__GNUC__ > 2) ||       \
     (                       \
       (__GNUC__ == 2) &&    \
@@ -207,7 +221,7 @@ struct _graph_vertex {
 // | BEGIN | utilities |
 // +-------+-----------+
 
-GRAPH_ABI_HIDDEN inline uint8_t
+GRAPH_ABI_HIDDEN _ALWAYS_INLINE inline uint8_t
 _uint_num_digits(
   uintmax_t num
 ) {

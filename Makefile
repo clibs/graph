@@ -1,6 +1,13 @@
 AR ?= ar
 CC ?= gcc
-CFLAGS = -Ideps -lm -O2 -pedantic -std=c99 -v -Wall -Wextra
+CFLAGS = -Ideps -lm -pedantic -std=c99 -v -Wall -Wextra
+
+ifeq ($(APP_DEBUG),true)
+	CFLAGS += -g -O0
+else
+	CFLAGS += -O2
+endif
+
 PREFIX ?= /usr/local
 
 DEPS += $(wildcard deps/*/*.c)
@@ -29,13 +36,13 @@ example:
 	$(CC) $(CFLAGS) -Ibuild/include -o example example.c -Lbuild/lib -lgraph
 
 install: all
-	mkdir -p $(PREFIX)/include
+	mkdir -p $(PREFIX)/include/graph
 	mkdir -p $(PREFIX)/lib
+	cp -f src/graph.h $(PREFIX)/include/graph/graph.h
 	cp -f build/libgraph.a $(PREFIX)/lib/libgraph.a
-	cp -f src/graph.h $(PREFIX)/include/graph.h
 
 uninstall:
+	rm -fr $(PREFIX)/include/graph/graph.h
 	rm -fr $(PREFIX)/lib/libgraph.a
-	rm -fr $(PREFIX)/include/graph.h
 
 .PHONY: build clean example install uninstall
