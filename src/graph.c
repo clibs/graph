@@ -45,6 +45,11 @@ graph_teardown_store(
 );
 
 static void
+graph_teardown_store_adjacency_list(
+  graph_graph_t *
+);
+
+static void
 graph_vertex_delete(
   graph_vertex_t *
 );
@@ -67,7 +72,7 @@ graph_add_edge(
 ) {
   graph_edge_t * edge = _MALLOC(graph_edge_t, 1);
 
-  if (! edge) { return NULL; }
+  if (! edge) { exit(-1); }
 
   if (graph->_auto_inc.edge.is_available) { edge->id = graph->_auto_inc.edge.available; }
   else { edge->id = ++graph->_auto_inc.edge.last; }
@@ -101,7 +106,7 @@ graph_add_vertex(
 ) {
   graph_vertex_t * vertex = _MALLOC(graph_vertex_t, 1);
 
-  if (! vertex) { return NULL; }
+  if (! vertex) { exit(-1); }
 
   if (graph->_auto_inc.vertex.is_available) { vertex->id = graph->_auto_inc.vertex.available; }
   else { vertex->id = ++graph->_auto_inc.vertex.last; }
@@ -145,7 +150,7 @@ graph_new(
 ) {
   graph_graph_t * graph = _MALLOC(graph_graph_t, 1);
 
-  if (! graph) { return NULL; }
+  if (! graph) { exit(-1); }
 
   graph->label      = label;
   graph->edges      = list_new();
@@ -235,6 +240,8 @@ _graph_item_set_label(
       case _GRAPH_ITEM_TYPE_EDGE:
         ((graph_edge_t *) item)->label = _MALLOC(const char, label_size);
 
+        if (! ((graph_edge_t *) item)->label) { exit(-1); }
+
         snprintf(
           ((graph_edge_t *) item)->label,
           label_size,
@@ -247,6 +254,8 @@ _graph_item_set_label(
       case _GRAPH_ITEM_TYPE_GRAPH:
         ((graph_graph_t *) item)->label = _MALLOC(const char, label_size);
 
+        if (! ((graph_graph_t *) item)->label) { exit(-1); }
+
         snprintf(
           ((graph_graph_t *) item)->label,
           label_size,
@@ -258,6 +267,8 @@ _graph_item_set_label(
 
       case _GRAPH_ITEM_TYPE_VERTEX:
         ((graph_vertex_t *) item)->label = _MALLOC(const char, label_size);
+
+        if (! ((graph_vertex_t *) item)->label) { exit(-1); }
 
         snprintf(
           ((graph_vertex_t *) item)->label,
@@ -296,6 +307,8 @@ _graph_item_set_label(
       case _GRAPH_ITEM_TYPE_EDGE:
         ((graph_edge_t *) item)->label = _MALLOC(const char, label_size);
 
+        if (! ((graph_edge_t *) item)->label) { exit(-1); }
+
         snprintf(
           ((graph_edge_t *) item)->label,
           label_size,
@@ -308,6 +321,8 @@ _graph_item_set_label(
       case _GRAPH_ITEM_TYPE_GRAPH:
         ((graph_graph_t *) item)->label = _MALLOC(const char, label_size);
 
+        if (! ((graph_graph_t *) item)->label) { exit(-1); }
+
         snprintf(
           ((graph_graph_t *) item)->label,
           label_size,
@@ -318,6 +333,8 @@ _graph_item_set_label(
 
       case _GRAPH_ITEM_TYPE_VERTEX:
         ((graph_vertex_t *) item)->label = _MALLOC(const char, label_size);
+
+        if (! ((graph_vertex_t *) item)->label) { exit(-1); }
 
         snprintf(
           ((graph_vertex_t *) item)->label,
@@ -336,22 +353,18 @@ graph_adjancency_list_append(
   graph_graph_t * graph,
   graph_edge_t * edge
 ) {
-  uint8_t _id_num_digits = _uint_num_digits(edge->from_vertex->id);
-  uint8_t _id_num_digits_str = _id_num_digits + 1;
-  char id_key[_id_num_digits_str];
+  graph_adjacency_list_ht_t * ht;
 
-  snprintf(
-    id_key,
-    _id_num_digits_str,
-    ("%" PRIuMAX),
-    edge->from_vertex->id
+  HASH_FIND(
+    handle,
+    graph->store.adjacency_list_hash,
+    &(edge->from_vertex->id),
+    sizeof(uintmax_t),
+    ht
   );
 
   list_rpush(
-    ((list_t *) hash_get(
-      graph->store.adjacency_list_hash,
-      id_key
-    )),
+    ht->edges,
     list_node_new(edge)
   );
 }
@@ -361,21 +374,19 @@ graph_adjancency_list_init(
   graph_graph_t * graph,
   graph_vertex_t * vertex
 ) {
-  uint8_t _id_num_digits = _uint_num_digits(vertex->id);
-  uint8_t _id_num_digits_str = _id_num_digits + 1;
-  char id_key[_id_num_digits_str];
+  graph_adjacency_list_ht_t * ht = _MALLOC(graph_adjacency_list_ht_t, 1);
 
-  snprintf(
-    id_key,
-    _id_num_digits_str,
-    ("%" PRIuMAX),
-    vertex->id
-  );
+  if (! ht) { exit(-1); }
 
-  hash_set(
+  ht->id    = vertex->id;
+  ht->edges = list_new();
+
+  HASH_ADD(
+    handle,
     graph->store.adjacency_list_hash,
-    id_key,
-    list_new()
+    id,
+    sizeof(uintmax_t),
+    ht
   );
 
   // ((list_t *) hash_get(
@@ -405,7 +416,7 @@ graph_setup_store(
 ) {
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
-      graph->store.adjacency_list_hash = hash_new();
+      graph->store.adjacency_list_hash = NULL;
 
       break;
 
@@ -424,13 +435,34 @@ graph_teardown_store(
 ) {
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
-      hash_each_val(graph->store.adjacency_list_hash, {
-        list_destroy(val);
-      });
-
-      hash_free(graph->store.adjacency_list_hash);
+      graph_teardown_store_adjacency_list(graph);
 
       break;
+  }
+}
+
+static void
+graph_teardown_store_adjacency_list(
+  graph_graph_t * graph
+) {
+  graph_adjacency_list_ht_t * ht;
+  graph_adjacency_list_ht_t * ht_tmp;
+
+  HASH_ITER(
+    handle,
+    graph->store.adjacency_list_hash,
+    ht,
+    ht_tmp
+  ) {
+    list_destroy(ht->edges);
+
+    HASH_DELETE(
+      handle,
+      graph->store.adjacency_list_hash,
+      ht
+    );
+
+    _FREE(ht);
   }
 }
 

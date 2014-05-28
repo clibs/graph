@@ -33,8 +33,9 @@ using namespace std;
 #include <string.h>
 #endif
 
-#include "hash/hash.h"
+// #include "hash/hash.h"
 #include "list/list.h"
+#include "uthash/uthash.h"
 
 #if                         \
   defined(__GNUC__) &&      \
@@ -77,7 +78,6 @@ using namespace std;
 #define _CAST_INTMAX_T(val) ((intmax_t) val)
 #define _CAST_UINT8_T(val) ((uint8_t) val)
 #define _CAST_UINTMAX_T(val) ((uintmax_t) val)
-// #define _CAST_UINTPTR_T(val) ((uintptr_t) val)
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,6 +91,7 @@ typedef enum _graph_stores {
   GRAPH_STORE_ADJANCENCY_LIST
 } graph_store_t;
 
+typedef struct _graph_adjacency_list_ht graph_adjacency_list_ht_t;
 typedef struct _graph_edge graph_edge_t;
 typedef struct _graph_graph graph_graph_t;
 typedef struct _graph_vertex graph_vertex_t;
@@ -149,6 +150,12 @@ graph_remove_vertex(
 // | BEGIN | struct definitions |
 // +-------+--------------------+
 
+struct _graph_adjacency_list_ht {
+  list_t * edges;
+  UT_hash_handle handle;
+  uintmax_t id;
+};
+
 struct _graph_edge {
   void * data;
   graph_vertex_t * from_vertex;
@@ -178,7 +185,8 @@ struct _graph_graph {
   const char * label;
 
   union {
-    hash_t * adjacency_list_hash;
+    graph_adjacency_list_ht_t * adjacency_list_hash;
+    // hash_t * adjacency_list_hash;
   } store;
 
   graph_store_t store_type;

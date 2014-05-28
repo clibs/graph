@@ -1,7 +1,7 @@
 {
   "dependencies": {
-    "hash": "0.0.1",
-    "list": "0.0.6"
+    "list": "0.0.6",
+    "jonathanmarvens/uthash": "1.9.9"
   },
 
   "description": "Simple (directed) graph library.",
