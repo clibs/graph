@@ -1,5 +1,36 @@
 #include "graph.h"
 
+#define _GRAPH_ITEM_SET_LABEL_TH_BEGIN(                                                                          \
+    item_,                                                                                                       \
+    type_                                                                                                        \
+  )                                                                                                              \
+    pthread_t set_label_th;                                                                                      \
+    struct _graph_item_set_label_th_args * set_label_th_args = _MALLOC(struct _graph_item_set_label_th_args, 1); \
+                                                                                                                 \
+    if (! set_label_th_args) { exit(-1); }                                                                       \
+                                                                                                                 \
+    int set_label_th_err = 0;                                                                                    \
+                                                                                                                 \
+    set_label_th_args->item  = item_;                                                                            \
+    set_label_th_args->label = label;                                                                            \
+    set_label_th_args->type  = type_;                                                                            \
+                                                                                                                 \
+    set_label_th_err = pthread_create(                                                                           \
+      &set_label_th,                                                                                             \
+      NULL,                                                                                                      \
+      _graph_item_set_label_th,                                                                                  \
+      set_label_th_args                                                                                          \
+    );                                                                                                           \
+                                                                                                                 \
+    if (set_label_th_err) { exit(-1); }
+
+#define _GRAPH_ITEM_SET_LABEL_TH_END                     \
+    set_label_th_err = pthread_join(set_label_th, NULL); \
+                                                         \
+    if (set_label_th_err) { exit(-1); }                  \
+                                                         \
+    _FREE(set_label_th_args);
+
 // +-------+---------------------+
 // | BEGIN | static declarations |
 // +-------+---------------------+
@@ -93,25 +124,7 @@ graph_add_edge(
   edge->weight      = weight;
   edge->data        = NULL;
 
-  pthread_t set_label_th;
-  struct _graph_item_set_label_th_args * set_label_th_args = _MALLOC(struct _graph_item_set_label_th_args, 1);
-
-  if (! set_label_th_args) { exit(-1); }
-
-  int set_label_th_err = 0;
-
-  set_label_th_args->item  = edge;
-  set_label_th_args->label = label;
-  set_label_th_args->type  = _GRAPH_ITEM_TYPE_EDGE;
-
-  set_label_th_err = pthread_create(
-    &set_label_th,
-    NULL,
-    _graph_item_set_label_th,
-    set_label_th_args
-  );
-
-  if (set_label_th_err) { exit(-1); }
+  _GRAPH_ITEM_SET_LABEL_TH_BEGIN(edge, _GRAPH_ITEM_TYPE_EDGE)
 
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
@@ -125,11 +138,7 @@ graph_add_edge(
     list_node_new(edge)
   );
 
-  set_label_th_err = pthread_join(set_label_th, NULL);
-
-  if (set_label_th_err) { exit(-1); }
-
-  _FREE(set_label_th_args);
+  _GRAPH_ITEM_SET_LABEL_TH_END
 
   return edge;
 }
@@ -148,25 +157,7 @@ graph_add_vertex(
 
   vertex->data = NULL;
 
-  pthread_t set_label_th;
-  struct _graph_item_set_label_th_args * set_label_th_args = _MALLOC(struct _graph_item_set_label_th_args, 1);
-
-  if (! set_label_th_args) { exit(-1); }
-
-  int set_label_th_err = 0;
-
-  set_label_th_args->item  = vertex;
-  set_label_th_args->label = label;
-  set_label_th_args->type  = _GRAPH_ITEM_TYPE_VERTEX;
-
-  set_label_th_err = pthread_create(
-    &set_label_th,
-    NULL,
-    _graph_item_set_label_th,
-    set_label_th_args
-  );
-
-  if (set_label_th_err) { exit(-1); }
+  _GRAPH_ITEM_SET_LABEL_TH_BEGIN(vertex, _GRAPH_ITEM_TYPE_VERTEX)
 
   switch (graph->store_type) {
     case GRAPH_STORE_ADJANCENCY_LIST:
@@ -182,11 +173,7 @@ graph_add_vertex(
 
   graph->cardinality++;
 
-  set_label_th_err = pthread_join(set_label_th, NULL);
-
-  if (set_label_th_err) { exit(-1); }
-
-  _FREE(set_label_th_args);
+  _GRAPH_ITEM_SET_LABEL_TH_END
 
   return vertex;
 }
@@ -234,26 +221,7 @@ graph_new(
   graph->vertices   = list_new();
   graph->store_type = store_type;
 
-  pthread_t set_label_th;
-  struct _graph_item_set_label_th_args * set_label_th_args = _MALLOC(struct _graph_item_set_label_th_args, 1);
-
-  if (! set_label_th_args) { exit(-1); }
-
-  int set_label_th_err = 0;
-
-  set_label_th_args->item  = graph;
-  set_label_th_args->label = label;
-  set_label_th_args->type  = _GRAPH_ITEM_TYPE_GRAPH;
-
-  set_label_th_err = pthread_create(
-    &set_label_th,
-    NULL,
-    _graph_item_set_label_th,
-    set_label_th_args
-  );
-
-  if (set_label_th_err) { exit(-1); }
-
+  _GRAPH_ITEM_SET_LABEL_TH_BEGIN(graph, _GRAPH_ITEM_TYPE_GRAPH)
   graph_setup_store(graph);
 
   graph->_auto_inc.edge.available    = 0;
@@ -272,11 +240,7 @@ graph_new(
   // graph->edges->match    = graph_edge_match;
   // graph->vertices->match = graph_vertex_match;
 
-  set_label_th_err = pthread_join(set_label_th, NULL);
-
-  if (set_label_th_err) { exit(-1); }
-
-  _FREE(set_label_th_args);
+  _GRAPH_ITEM_SET_LABEL_TH_END
 
   return graph;
 }
