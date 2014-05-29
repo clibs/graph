@@ -215,7 +215,6 @@ struct _graph_graph {
 
   union {
     graph_adjacency_list_ht_t * adjacency_list_hash;
-    // hash_t * adjacency_list_hash;
   } store;
 
   graph_store_t store_type;
