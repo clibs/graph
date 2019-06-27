@@ -1,6 +1,6 @@
 AR ?= ar
 CC ?= gcc
-CFLAGS = -Ideps -lm -lpthread -pedantic -std=c99 -v -Wall -Wextra
+CFLAGS = -Ideps -lm -lpthread -pedantic -std=c99 -Wall -Wextra
 
 ifeq ($(APP_DEBUG),true)
 	CFLAGS += -g -O0
@@ -33,7 +33,7 @@ clean:
 	rm -fr *.o build deps/*/*.o example example.dSYM src/*.o
 
 example: build
-	$(CC) $(CFLAGS) -Ibuild/include -o example example.c -Lbuild/lib -lgraph
+	$(CC) $(CFLAGS) -Ibuild/include -o example example.c -Lbuild/lib -lgraph -lm -lpthread
 
 install: all
 	mkdir -p $(PREFIX)/include/graph
