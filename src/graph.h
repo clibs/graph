@@ -125,13 +125,15 @@ graph_add_edge(
   const char *,
   graph_vertex_t *,
   graph_vertex_t *,
-  intmax_t
+  intmax_t,
+  void *
 );
 
 GRAPH_ABI_EXPORT graph_vertex_t *
 graph_add_vertex(
   graph_graph_t *,
-  const char *
+  const char *,
+  void *
 );
 
 GRAPH_ABI_EXPORT void
