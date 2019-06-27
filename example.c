@@ -10,18 +10,19 @@ int
 main(void) {
   graph_graph_t * graph = graph_new("test", GRAPH_STORE_ADJANCENCY_LIST);
 
-  graph_vertex_t * vertex1 = graph_add_vertex(graph, NULL);
-  graph_vertex_t * vertex2 = graph_add_vertex(graph, NULL);
-  graph_vertex_t * vertex3 = graph_add_vertex(graph, NULL);
-  graph_vertex_t * vertex4 = graph_add_vertex(graph, NULL);
-  graph_vertex_t * vertex5 = graph_add_vertex(graph, NULL);
+  graph_vertex_t * vertex1 = graph_add_vertex(graph, NULL, NULL);
+  graph_vertex_t * vertex2 = graph_add_vertex(graph, NULL, NULL);
+  graph_vertex_t * vertex3 = graph_add_vertex(graph, NULL, NULL);
+  graph_vertex_t * vertex4 = graph_add_vertex(graph, NULL, NULL);
+  graph_vertex_t * vertex5 = graph_add_vertex(graph, NULL, NULL);
 
   graph_edge_t * edge1 = graph_add_edge(
     graph,
     NULL,
     vertex1,
     vertex2,
-    0
+    0,
+    NULL
   );
 
   graph_edge_t * edge2 = graph_add_edge(
@@ -29,7 +30,8 @@ main(void) {
     NULL,
     vertex1,
     vertex4,
-    0
+    0,
+    NULL
   );
 
   graph_edge_t * edge3 = graph_add_edge(
@@ -37,7 +39,8 @@ main(void) {
     NULL,
     vertex3,
     vertex5,
-    0
+    0,
+    NULL
   );
 
   graph_edge_t * edge4 = graph_add_edge(
@@ -45,7 +48,8 @@ main(void) {
     NULL,
     vertex2,
     vertex5,
-    0
+    0,
+    NULL
   );
 
   printf("[graph]: %s\n", graph->label);

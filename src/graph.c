@@ -110,7 +110,8 @@ graph_add_edge(
   const char * label,
   graph_vertex_t * from_vertex,
   graph_vertex_t * to_vertex,
-  intmax_t weight
+  intmax_t weight,
+  void *data
 ) {
   graph_edge_t * edge = _MALLOC(graph_edge_t, 1);
 
@@ -122,7 +123,7 @@ graph_add_edge(
   edge->from_vertex = from_vertex;
   edge->to_vertex   = to_vertex;
   edge->weight      = weight;
-  edge->data        = NULL;
+  edge->data        = data;
 
   _GRAPH_ITEM_SET_LABEL_TH_BEGIN(edge, _GRAPH_ITEM_TYPE_EDGE)
 
@@ -146,7 +147,8 @@ graph_add_edge(
 graph_vertex_t *
 graph_add_vertex(
   graph_graph_t * graph,
-  const char * label
+  const char * label,
+  void *data
 ) {
   graph_vertex_t * vertex = _MALLOC(graph_vertex_t, 1);
 
@@ -155,7 +157,7 @@ graph_add_vertex(
   if (graph->_auto_inc.vertex.is_available) { vertex->id = graph->_auto_inc.vertex.available; }
   else { vertex->id = ++graph->_auto_inc.vertex.last; }
 
-  vertex->data = NULL;
+  vertex->data = data;
 
   _GRAPH_ITEM_SET_LABEL_TH_BEGIN(vertex, _GRAPH_ITEM_TYPE_VERTEX)
 
